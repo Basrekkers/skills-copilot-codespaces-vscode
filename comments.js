@@ -1,67 +1,31 @@
-// Create Web Server
-// Create Database
-// Create Schema
-// Create Model
-// Create Router
-// Create Controller
+// Create web server
+// 1. Create HTTP Server
+// 2. Create Router
+// 3. Create Middlewares
+// 4. Listen for Requests
 
-// 1. Create Web Server
-const express = require('express');
-const app = express();
-const port = 3000;
+// 1. Create HTTP Server
+const http = require('http');
+const server = http.createServer();
 
-// 2. Create Database
-const mongoose = require('mongoose');
-const db = mongoose.connection;
-const db_url = 'mongodb://localhost:27017';
-const db_name = 'comment';
-mongoose.connect(`${db_url}/${db_name}`, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true
-});
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-    console.log(`Connected to ${db_name} database`);
-});
+// 2. Create Router
+const router = require('./router');
 
-// 3. Create Schema
-const commentSchema = new mongoose.Schema({
-    comment: String,
-    name: String,
-    date: Date
+// 3. Create Middlewares
+const bodyParser = require('./middlewares/bodyParser');
+const logger = require('./middlewares/logger');
+
+// 4. Listen for Requests
+server.on('request', (req, res) => {
+  // 1. Parse the request
+  bodyParser(req, res);
+  // 2. Log the request
+  logger(req, res);
+  // 3. Route the request
+  router(req, res);
 });
 
-// 4. Create Model
-const Comment = mongoose.model('Comment', commentSchema);
-
-// 5. Create Router
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
-
-app.get('/comment', (req, res) => {
-    Comment.find((err, comments) => {
-        if (err) return console.error(err);
-        res.send(comments);
-    }).sort({date: -1});
-});
-
-app.post('/comment', (req, res) => {
-    const comment = new Comment({
-        comment: req.body.comment,
-        name: req.body.name,
-        date: Date.now()
-    });
-    comment.save((err, comment) => {
-        if (err) return console.error(err);
-        res.send(comment);
-    });
-});
-
-// 6. Create Controller
-
-// 7. Start Web Server
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`);
+const port = 5000;
+server.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
 });
